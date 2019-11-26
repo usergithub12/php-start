@@ -22,11 +22,11 @@
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link disabled" href="#">
+        <a class="nav-link" href="/register.php">
           <i class="fa fa-envelope-o">
             <span class="badge badge-warning">11</span>
           </i>
-          Disabled
+          Register
         </a>
       </li>
       <li class="nav-item dropdown">

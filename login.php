@@ -1,7 +1,5 @@
 <?php 
-    // if($_SERVER["REQUEST_METHOD"]=="POST") {
-    //     $email = $_POST["email"];
-    //     echo "POST REQUEST = ".$email;
+ $invalid = '';
     include_once "connection_database.php";
 
         $errors = array();
@@ -27,32 +25,25 @@
             //     $errors["image"] = "Поле є обов'язковим";
             // }
             if (count($errors) == 0) {
-                try {
+               
                 
                 // $password = md5($password);
-                $sql = "SELECT * FROM tbl_users WHERE email='$email' AND password='$password'";
-               
-               
-                // $number_of_rows = count($result->fetchAll()); 
-             $sth = $dbh->prepare($sql);
-             $sth->execute();
-              //  $result =  count($sql_res->fetchAll());
-                $result = count($sth->fetchAll());
-
-                if ($result > 0) {
-                  $_SESSION['email'] = $email;
-                  $_SESSION['success'] = "You are now logged in";
-                  header('location: index.php');
-                }else {
-                    array_push($errors, "Wrong username/password combination");
+                include_once "connection_database.php";
+                $query = $dbh->prepare('SELECT islock, password FROM tbl_users WHERE email = ?');
+                $query->execute(array($email));
+                if ($results = $query->fetch(PDO::FETCH_ASSOC)) {
+                    if (password_verify($password, $results['password'])) {
+                        echo $results['islock'];
+                        header('Location: /?g=' . $email);
+                        exit;
+                    }
+                } else {
+                    $invalid = "Не валідні дані";
                 }
-            }
-            catch(PDOException $e)
-            {
-            echo $e->getMessage();
-            }
+          
         }
-    }
+    
+}
 
     
 
