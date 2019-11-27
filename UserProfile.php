@@ -3,11 +3,28 @@
 
 include "_header.php";
 include_once "input-helper.php";
-include_once "input-helper.php";
 
+ session_start();
 
+ $email= $_SESSION["email"];
+// $image = $_SESSION['image'];
+
+include_once "connection_database.php";
+$sth = $dbh->prepare("SELECT * FROM `tbl_users` WHERE email = ?");
+// $query->execute(array($email));
+    $sth->execute(array($email));
+    
+    $result = $sth->fetch(PDO::FETCH_ASSOC);
+   
+        $image=$result["Image"];
+        
+    
 $errors = array();
+
 ?>
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -25,7 +42,7 @@ $errors = array();
                 <div class="row">
                     <div class="col-md-4">
                         <div class="profile-img">
-                            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS52y5aInsxSm31CvHOFHWujqUx_wWTS9iM6s7BAm21oEN_RiGoog" alt=""/>
+                            <img src=<?php echo "http://localhost:100/upload/".$image;?> alt=""/>
                             <!-- <div class="file btn btn-primary">
                                 Change Photo
                                 <input type="file" name="file"/>
@@ -36,7 +53,7 @@ $errors = array();
                     <div class="col-md-6">
                         <div class="profile-head">
                                     <h5>
-                                        Kshiti Ghelani
+                                    <?php echo $email?>
                                     </h5>
                                     <h6>
                                         Web Developer and Designer
@@ -95,7 +112,7 @@ $errors = array();
                                                 <label>Email</label>
                                             </div>
                                             <div class="col-md-6">
-                                                <p>kshitighelani@gmail.com</p>
+                                                <p> <?php echo $email?></p>
                                             </div>
                                         </div>
                                         <div class="row">

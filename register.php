@@ -1,28 +1,9 @@
-
 <?php
-include_once "connection_database.php";
-
 $errors = array();
 $email = '';
 $password = '';
+session_start();
 
-
-function compressImage($source, $destination, $quality) {
-      
-    $info = getimagesize($source);
-  
-    if ($info['mime'] == 'image/jpeg') 
-      $image = imagecreatefromjpeg($source);
-  
-    elseif ($info['mime'] == 'image/gif') 
-      $image = imagecreatefromgif($source);
-  
-    elseif ($info['mime'] == 'image/png') 
-      $image = imagecreatefrompng($source);
-  
-    imagejpeg($image, $destination, $quality);
-  
-  } 
 // $image='';
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     //$email = $_POST["email"];
@@ -37,63 +18,119 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } else {
         $errors["password"] = "Поле є обов'язковим";
     }
-   
-
+    // if (isset($_POST['image']) and !empty($_POST['image'])) {
+        //  $image = $_POST['image'];
+    //     ;
+    // } else {
+    //     $errors["image"] = "Поле є обов'язковим";
+    // }
+    
     if (count($errors) == 0) {
-        $uploaddir = $_SERVER['DOCUMENT_ROOT'].'/uploads/';
+        $uploaddir = $_SERVER['DOCUMENT_ROOT'].'/upload/';
         $file_name= uniqid('300_').'.jpg';
         $file_save_path=$uploaddir.$file_name;
-        //$tmpfname = tempnam("/uploads", "300_");
-       //$uploadfile = $uploaddir . $tmpfname;//basename($_FILES['image']['name']);
+        my_image_resize(600,400,$file_save_path,'image');
+
+        $_SESSION['image'] = $file_name;
+
+        $imageSmall= resize_image($_FILES['image']['tmp_name'],600,400);
        if (move_uploaded_file($_FILES['image']['tmp_name'], $file_save_path)) {
            echo "Файл корректен и был успешно загружен.\n";
        } else {
            echo "Возможная атака с помощью файловой загрузки!\n";
        }
+       include_once "connection_database.php";
 
-       // SAVE PHOTO [COMPRESSED] ============>
-    
-        // Getting file name
-        // $filename = $_FILES['imagefile']['name'];
-        // Valid extension
-        $valid_ext = array('png','jpeg','jpg');
-        // Location
-        // $location = "images/".$filename;
-        // file extension
-        $file_extension = pathinfo($file_save_path, PATHINFO_EXTENSION);
-        $file_extension = strtolower($file_extension);
-        // Check extension
-        if(in_array($file_extension,$valid_ext)){
-          // Compress Image
-          
-          compressImage($file_save_path,$uploaddir."_10__".$file_name,10);
-          compressImage($file_save_path,$uploaddir."_50__".$file_name,50);
-          compressImage($file_save_path,$uploaddir."_100__".$file_name,100);
-        }else{
-          echo "Invalid file type.";
-        }
-      }
- 
-
-    include_once "connection_database.php";
-    $email=strip_tags($email);//htmlentities($email);//$dbh->quote($email);
-    $hash=password_hash($password, PASSWORD_DEFAULT);
-    $sql = "INSERT INTO tbl_users (email, password, isLock) VALUES (?,?,?)";
-    $stmt= $dbh->prepare($sql);
-    $res = $stmt->execute([$email, $hash, 0]);
-    header('Location: /?g=' . $email);
- 
-    exit;
+       $email=strip_tags($email);//htmlentities($email);//$dbh->quote($email);
+       $hash=password_hash($password, PASSWORD_DEFAULT);
+       $sql = "INSERT INTO tbl_users (email, password, isLock,Image) VALUES (?,?,?,?)";
+       $stmt= $dbh->prepare($sql);
+       $res = $stmt->execute([$email, $hash, 0,$file_name]);
+       header('Location: /?g=' . $email);
+        //mysqli_connect()
+        exit;
+    }
 }
-          
-
-
-
-
-
-
+function my_image_resize($width, $height, $path, $inputName) //32x32
+{
+    //Оригінал висота і ширина
+    list($w,$h)= getimagesize($_FILES[$inputName]['tmp_name']); //204x247
+    $maxSize=0;
+    //Обчислюємо максмильан знечення або ширина або висота
+    if(($w>$h) and ($width>$height)) //204>247 and 32>32
+        $maxSize=$width;
+    else
+        $maxSize=$height; //32
+    //MaxSize=32
+    $width=$maxSize; //32
+    $height=$maxSize; //32
+    $ration_orig=$w/$h; //204/247=0.82
+    if(1>$ration_orig) //1>0.82 вірно
+    {
+        $width=ceil($height*$ration_orig); /*32*0.82=26.24 = 27 */     //34- all //10- records page  ceil(3.4)
+    }
+    else//Хибно
+    {
+        $height=ceil($width/$ration_orig);
+    }
+    //27x32
+    //Створюємо новий файл
+    $imgString=file_get_contents($_FILES[$inputName]['tmp_name']);
+    $image=imagecreatefromstring($imgString);
+    $tmp=imagecreatetruecolor($width,$height); //розмір нового зображення 27x32
+    imagecopyresampled($tmp,$image,
+        0,0,
+        0,0,
+        $width, $height,
+        $w,$h
+    );
+    //Збереження зображення
+    switch($_FILES[$inputName]['type'])
+    {
+        case 'image/jpeg':
+            imagejpeg($tmp,$path,30);
+            break;
+        case 'image/png':
+            imagepng($tmp,$path,0);
+            break;
+        case 'image/gif':
+            imagegif($tmp,$path);
+            break;
+        default:
+            exit;
+            break;
+    }
+    return $path;
+    //Очисчаємо память
+    imagedestroy($image);
+    imagedestroy($tmp);
+}
+function resize_image($file, $w, $h, $crop=FALSE) {
+    list($width, $height) = getimagesize($file);
+    $r = $width / $height;
+    if ($crop) {
+        if ($width > $height) {
+            $width = ceil($width-($width*abs($r-$w/$h)));
+        } else {
+            $height = ceil($height-($height*abs($r-$w/$h)));
+        }
+        $newwidth = $w;
+        $newheight = $h;
+    } else {
+        if ($w/$h > $r) {
+            $newwidth = $h*$r;
+            $newheight = $h;
+        } else {
+            $newheight = $w/$r;
+            $newwidth = $w;
+        }
+    }
+    $src = imagecreatefromjpeg($file);
+    $dst = imagecreatetruecolor($newwidth, $newheight);
+    imagecopyresampled($dst, $src, 0, 0, 0, 0, $newwidth, $newheight, $width, $height);
+    return $dst;
+}
 ?>
-
 
 
 

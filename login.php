@@ -2,6 +2,8 @@
  $invalid = '';
     include_once "connection_database.php";
 
+    session_start();
+
         $errors = array();
         $email = '';
         $password = '';
@@ -34,7 +36,9 @@
                 if ($results = $query->fetch(PDO::FETCH_ASSOC)) {
                     if (password_verify($password, $results['password'])) {
                         echo $results['islock'];
-                        header('Location: /?g=' . $email);
+                        $_SESSION["email"]= $email;
+                        //header('Location: /?g=' . $email);
+                        header('Location: /UserProfile.php');
                         exit;
                     }
                 } else {
