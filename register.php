@@ -24,6 +24,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // } else {
     //     $errors["image"] = "Поле є обов'язковим";
     // }
+
+//==============CAPTCHA=============
+if($_POST['code'] == $_SESSION['rand_code']) {
+    // send email
+    $accept = "Thank you for contacting me.";
+ 
+} else {
+    $errors["captcha"] = "Please verify that you typed in the correct code.";
+    $error = "Please verify that you typed in the correct code.";
+ 
+}
+
     
     if (count($errors) == 0) {
         $uploaddir = $_SERVER['DOCUMENT_ROOT'].'/upload/';
@@ -152,12 +164,17 @@ include_once "input-helper.php" ?>
 
                 <img id="prev"/>
 
+                <!-- <p><textarea name="message"></textarea></p> -->
+    <img src="captcha.php"/>
+    <p><input type="text" name="code" /> Are you human?</p>
+
                 <div class="form-group">
                     <input type="submit" class="btnSubmit" value="Register"/>
                 </div>
                 <div class="form-group">
                     <a href="#" class="ForgetPwd">Forget Password?</a>
                 </div>
+     
             </form>
         </div>
 
