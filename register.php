@@ -38,6 +38,43 @@ if($_POST['code'] == $_SESSION['rand_code']) {
 
     
     if (count($errors) == 0) {
+// Add class User
+
+class User { 
+    public $email = ""; 
+    public $password = ""; 
+     
+    
+    function show() { 
+        echo $this->email;
+        echo $this->password;
+      
+    } 
+    function toDB() { 
+        include_once "connection_database.php";
+
+        $email=strip_tags($this->email);//htmlentities($email);//$dbh->quote($email);
+        $hash=password_hash($this->password, PASSWORD_DEFAULT);
+        $sql = "INSERT INTO tbl_users (email, password) VALUES (?,?)";
+        $stmt= $dbh->prepare($sql);
+        $res = $stmt->execute([$email, $hash]);
+        header('Location: /?g=' . $email);
+         //mysqli_connect()
+         exit;
+      
+    } 
+} 
+
+$user = new User(); 
+$user->email=$email;
+$user->password=$password;
+//$user->show();
+//$user->toDB();
+
+
+
+
+        //==============================================
         $uploaddir = $_SERVER['DOCUMENT_ROOT'].'/upload/';
         $file_name= uniqid('300_').'.jpg';
         $file_save_path=$uploaddir.$file_name;
@@ -143,6 +180,7 @@ function resize_image($file, $w, $h, $crop=FALSE) {
     return $dst;
 }
 ?>
+
 
 
 
