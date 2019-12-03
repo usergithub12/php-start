@@ -30,7 +30,7 @@
                
                 
                 // $password = md5($password);
-                include_once "connection_database.php";
+                // include_once "connection_database.php";
                 $query = $dbh->prepare('SELECT islock, password FROM tbl_users WHERE email = ?');
                 $query->execute(array($email));
                 if ($results = $query->fetch(PDO::FETCH_ASSOC)) {
